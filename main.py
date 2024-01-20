@@ -39,6 +39,8 @@ def chatbot():
             st.session_state["past"].append(user_input)
             st.session_state["generated"].append(response)
             st.session_state["input_message_key"] = str(random.random())
+            print("jdfbdvfd hf")
+            print(st.session_state['input_message_key'])
             st.rerun()
         if st.session_state["generated"]:
              with chat_container:
@@ -70,20 +72,26 @@ def homepage():
             f.write(uploaded_file.getbuffer()) # save pdf to disk
         st.success("Uploading File.....")
         loader = PyPDFLoader(pdf)
+        # print("loader is ", loader)
         documents = loader.load()
+        # print("docments is", loader.load())
         text_splitter = CharacterTextSplitter(
                 chunk_size=1000,
                 chunk_overlap=0)
         texts = text_splitter.split_documents(documents)
-        st.success("File uploaded successfully!")
-        st.write("Processing Uploaded PDF..........")
-        embeddings = OpenAIEmbeddings()
-        db = Chroma.from_documents(texts,embeddings)
-        retriever = db.as_retriever(search_type='similarity',search_kwargs={"k":2})
-        qa = ConversationalRetrievalChain.from_llm(OpenAI(),retriever)
-        st.success("PDF processed Successfully!!!")
-        st.session_state['qabot'] = qa
-        st.session_state['pdf_name'] = pdf
+        # print("Texts is", texts)
+        if len(texts) == 0:
+            st.error("Please ensure your uploaded  document is selectable (i.e not scanned)")
+        else:
+            st.success("File uploaded successfully!")
+            st.write("Processing Uploaded PDF..........")
+            embeddings = OpenAIEmbeddings()
+            db = Chroma.from_documents(texts,embeddings)
+            retriever = db.as_retriever(search_type='similarity',search_kwargs={"k":2})
+            qa = ConversationalRetrievalChain.from_llm(OpenAI(),retriever)
+            st.success("PDF processed Successfully!!!")
+            st.session_state['qabot'] = qa
+            st.session_state['pdf_name'] = pdf
 
 
 
