@@ -92,6 +92,7 @@ def homepage():
             st.success("PDF processed Successfully!!!")
             st.session_state['qabot'] = qa
             st.session_state['pdf_name'] = pdf
+            st.write("Proceed to the Assistant Please")
 
 
 
