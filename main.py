@@ -11,6 +11,10 @@ from langchain.chains import ConversationalRetrievalChain
 from langchain_community.document_loaders import PyPDFLoader
 from utils import update_chat_history_and_get_answer, clear_history
 
+
+__import__('pysqlite3')
+import sys
+sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
 load_dotenv()
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
