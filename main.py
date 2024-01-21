@@ -2,6 +2,7 @@ import os
 import random
 import string
 import pinecone
+import traceback
 import streamlit as st
 from dotenv import load_dotenv
 from streamlit_chat import message
@@ -9,7 +10,7 @@ from langchain_openai import ChatOpenAI
 from langchain.memory import ConversationBufferMemory
 from langchain.agents import initialize_agent, Tool
 from langchain_openai import OpenAIEmbeddings
-from langchain_community.vectorstores import Pinecone
+from langchain_community.vectorstores import Pinecone,FAISS
 from langchain.text_splitter import CharacterTextSplitter
 from langchain.chains import RetrievalQA
 from langchain_community.document_loaders import PyPDFLoader
@@ -18,8 +19,7 @@ load_dotenv()
 
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-PINECONE_API_KEY= os.getenv("PINECONE_API_KEY")
-PINECONE_ENVIRONMENT=os.getenv("PINECONE_ENVIRONMENT")
+
 
 llm = ChatOpenAI(    
         openai_api_key=OPENAI_API_KEY, 
@@ -140,6 +140,7 @@ def chatbot():
     if 'qabot' not in st.session_state:
         st.error("Please Upload a PDF File")
     else:
+       
         st.header("Q & A Assistant")
         qa = st.session_state['qabot']
         st.markdown(f"Ask questions related to the uploaded file here : {st.session_state['pdf_name']}")
@@ -153,6 +154,8 @@ def chatbot():
         chat_container = st.container()
         user_input = st.text_input("Type your question here.", key=st.session_state["input_message_key"])
         if st.button("Send"):
+            # try:
+
             response = st.session_state["qabot"].get_response(user_input)
             print(response)
             st.session_state["past"].append(user_input)
@@ -161,6 +164,8 @@ def chatbot():
             print("jdfbdvfd hf")
             print(st.session_state['input_message_key'])
             st.rerun()
+            # except:
+            #     st.error("Pinecone related issues")
         if st.session_state["generated"]:
              with chat_container:
                   for i in range(len(st.session_state["generated"])):
@@ -202,30 +207,31 @@ def homepage():
         # print("docments is", loader.load())
         # print("documents is ")
         text_splitter = CharacterTextSplitter(
-                chunk_size=400,
-                chunk_overlap=20)
+                chunk_size=1500,
+                chunk_overlap=200)
         texts = text_splitter.split_documents(documents)
         print("lenghts ius", len(texts))
         # print("Texts is", texts)
         if len(texts) == 0:
             st.error("Please ensure your uploaded  document is selectable (i.e not scanned)")
         else:
-            st.success("File uploaded successfully!")
-            st.write("Doing some database initialization")
-            get_index(name)
+            # st.success("File uploaded successfully!")
+            # st.write("Doing some database initialization")
+            # get_index(name)
             # try:
             print(1)
             embeddings = OpenAIEmbeddings()
             print(2)
             try:
 
-                docsearch = Pinecone.from_documents(texts, embeddings, index_name=name)
-                print(3)
-                st.success("Database Initialization Successful")
-                retriever = docsearch.as_retriever()
+                # docsearch = Pinecone.from_documents(texts, embeddings, index_name=name)
+                # print(3)
+                # st.success("Database Initialization Successful")
+                # retriever = docsearch.as_retriever()
                 # if "pdf_name" in st.session_state:
                 #     db.delete_collection()
-            
+                db = FAISS.from_documents(texts,embeddings)
+                retriever = db.as_retriever()
                 # db = Chroma.from_documents(texts,embeddings,collection_name="test_collection")
                 # print("yam")
                 # print(db._collection.count())
@@ -250,16 +256,14 @@ def homepage():
                 st.session_state['qabot'] = agency
                 st.session_state['pdf_name'] = pdf
                 st.write("Proceed to the Assistant Please")
-            except:
+            except Exception as e:
+                print(f"An error occurred: {e}")
+                traceback.print_exc()
                 st.error("A network error occured, Please check your internet connection and try again")
 
 
 
 def main():
-    pinecone.init(
-    api_key=PINECONE_API_KEY , # find at app.pinecone.io
-    environment=PINECONE_ENVIRONMENT,  # next to api key in console
-    )
     st.sidebar.title("Navigation")
     selection = st.sidebar.radio("Go to", ["Home Page","Q&A Assistant"])
     if selection == "Home Page":
