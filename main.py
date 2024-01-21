@@ -207,15 +207,15 @@ def homepage():
         # print("docments is", loader.load())
         # print("documents is ")
         text_splitter = CharacterTextSplitter(
-                chunk_size=1500,
-                chunk_overlap=200)
+                chunk_size=400,
+                chunk_overlap=20)
         texts = text_splitter.split_documents(documents)
         print("lenghts ius", len(texts))
         # print("Texts is", texts)
         if len(texts) == 0:
             st.error("Please ensure your uploaded  document is selectable (i.e not scanned)")
         else:
-            # st.success("File uploaded successfully!")
+            st.success("File uploaded successfully!")
             # st.write("Doing some database initialization")
             # get_index(name)
             # try:
