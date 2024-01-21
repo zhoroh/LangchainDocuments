@@ -119,8 +119,6 @@ def homepage():
         with open(pdf, mode='wb') as f:
             f.write(uploaded_file.getbuffer()) # save pdf to disk
         st.success("Uploading File.....")
-        name = generate_random_string()
-        
         loader = PyPDFLoader(pdf)
         # print("loader is ", loader)
         documents = loader.load()
