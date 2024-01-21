@@ -1,6 +1,7 @@
 import os
 import re
 import random
+import string
 import pinecone
 import streamlit as st
 from dotenv import load_dotenv
@@ -22,18 +23,26 @@ PINECONE_ENVIRONMENT=os.getenv("PINECONE_ENVIRONMENT")
 
 
 
-def extract_letters(input_string):
+
+def generate_random_string(length=10):
     """
-    Extracts only the letters from the input string.
+    Generates a random string of a given length.
 
     Args:
-    input_string (str): The input string from which to extract letters.
+    length (int): The length of the random string to generate. Default is 10.
 
     Returns:
-    str: A string containing only letters from the input string.
+    str: A random string of the specified length.
     """
-    # Use regular expression to find all letters and join them
-    return ''.join(re.findall("[a-zA-Z]+", input_string))
+    # Create a sequence of letters and digits
+    characters = string.ascii_letters + string.digits
+
+    # Randomly select characters and join them into a string
+    random_string = ''.join(random.choice(characters) for _ in range(length))
+
+    return random_string
+
+
 
 
 # print(pinecone.list_indexes())
@@ -133,8 +142,7 @@ def homepage():
             f.write(uploaded_file.getbuffer()) # save pdf to disk
         st.success("Uploading File.....")
         print(pdf)
-        name = extract_letters(pdf.lower())
-        name = name[:40]
+        name = generate_random_string()
         
         loader = PyPDFLoader(pdf)
         # print("loader is ", loader)
