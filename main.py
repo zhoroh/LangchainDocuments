@@ -134,7 +134,7 @@ def homepage():
         print(pdf)
         name = extract_letters(pdf.lower())
         name = name[:40]
-        get_index(name)
+        
         loader = PyPDFLoader(pdf)
         # print("loader is ", loader)
         documents = loader.load()
@@ -149,6 +149,7 @@ def homepage():
         if len(texts) == 0:
             st.error("Please ensure your uploaded  document is selectable (i.e not scanned)")
         else:
+            get_index(name)
             st.success("File uploaded successfully!")
             st.write("Processing Uploaded PDF..........")
             embeddings = OpenAIEmbeddings()
