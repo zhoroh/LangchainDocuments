@@ -26,21 +26,22 @@ PINECONE_ENVIRONMENT=os.getenv("PINECONE_ENVIRONMENT")
 
 def generate_random_string(length=10):
     """
-    Generates a random string of a given length.
+    Generates a random string of a given length with only lowercase letters.
 
     Args:
     length (int): The length of the random string to generate. Default is 10.
 
     Returns:
-    str: A random string of the specified length.
+    str: A random string of lowercase letters of the specified length.
     """
-    # Create a sequence of letters and digits
-    characters = string.ascii_letters + string.digits
+    # Use only lowercase letters
+    characters = string.ascii_lowercase
 
     # Randomly select characters and join them into a string
     random_string = ''.join(random.choice(characters) for _ in range(length))
 
     return random_string
+
 
 
 
