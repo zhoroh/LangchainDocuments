@@ -210,9 +210,9 @@ def homepage():
         if len(texts) == 0:
             st.error("Please ensure your uploaded  document is selectable (i.e not scanned)")
         else:
-            get_index(name)
             st.success("File uploaded successfully!")
-            st.write("Processing Uploaded PDF..........")
+            st.write("Doing some database initialization")
+            get_index(name)
             # try:
             print(1)
             embeddings = OpenAIEmbeddings()
@@ -221,6 +221,7 @@ def homepage():
 
                 docsearch = Pinecone.from_documents(texts, embeddings, index_name=name)
                 print(3)
+                st.success("Database Initialization Successful")
                 retriever = docsearch.as_retriever()
                 # if "pdf_name" in st.session_state:
                 #     db.delete_collection()
@@ -236,6 +237,7 @@ def homepage():
                     retriever=retriever,
                 )
                 print(5)
+                st.write("Processing Uploaded PDF..........")
                 memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
                 agency = Agency()
                 print("yam")
