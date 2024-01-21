@@ -15,6 +15,7 @@ from utils import update_chat_history_and_get_answer, clear_history
 
 load_dotenv()
 
+
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 PINECONE_API_KEY= os.getenv("PINECONE_API_KEY")
 PINECONE_ENVIRONMENT=os.getenv("PINECONE_ENVIRONMENT")
