@@ -123,13 +123,13 @@ def upload():
                 st.session_state['qabot'] = agency
                 st.session_state['pdf_name'] = pdf
                 #generate summary
-                response = agency.get_response("Generate a short, concise and useful summary of the uploaded document")
+                response = agency.get_response("In 3 bullet points generate a summary of the uploaded document")
                 summary = response['output']
                 st.success("PDF processed Successfully!!!")
                 st.info("Summary of Uploaded Document is shown below")
                 st.write(summary)
                 # action = st.radio("What do you want to do?", ["INTERACT WITH UPLOADED PDF", "QUIZZ GENERATION"],horizontal=True)
-                st.info("Please Proceed By Clicking on any of the Options on the Left Sidebar")
+                st.info("Please Proceed By Clicking on any of the Options on the Left Sidebar at the top")
                 # if st.button("Proceed"):
                 #     if action == "INTERACT WITH UPLOADED PDF":
                 #         chatbot()
