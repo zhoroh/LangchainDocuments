@@ -120,10 +120,22 @@ def upload():
                 agency = Agency()
                 agency.initialize_tools(qa,pdf_name)
                 agency.load_agent_details(memory)
-                st.success("PDF processed Successfully!!!")
                 st.session_state['qabot'] = agency
                 st.session_state['pdf_name'] = pdf
-                st.write("Proceed Please")
+                #generate summary
+                response = agency.get_response("Generate a descriptive summary of the uploaded document")
+                summary = response['output']
+                st.success("PDF processed Successfully!!!")
+                st.info("Summary of Uploaded Document is shown below")
+                st.write(summary)
+                # action = st.radio("What do you want to do?", ["INTERACT WITH UPLOADED PDF", "QUIZZ GENERATION"],horizontal=True)
+                st.info("Please Proceed By Clicking on any of the Options on the Left Sidebar")
+                # if st.button("Proceed"):
+                #     if action == "INTERACT WITH UPLOADED PDF":
+                #         chatbot()
+                #     else:
+                #         quizz_generation()
+               
             except Exception as e:
                 print(f"An error occurred: {e}")
                 traceback.print_exc()
@@ -423,10 +435,10 @@ def display_on_streamlit():
 
 def main():
     st.sidebar.title("Navigation")
-    selection = st.sidebar.radio("Go to", ["Upload File","Interact With Uploaded PDF File", "Quizz Generation","Display Quizz"])
+    selection = st.sidebar.radio("Go to", ["Upload File","Interact With Uploaded PDF", "Quizz Generation","Display Quizz"])
     if selection == "Upload File":
         upload()
-    elif selection == "Interact With Uploaded PDF File":
+    elif selection == "Interact With Uploaded PDF":
         chatbot()
     elif selection == "Quizz Generation":
         quizz_generation()
