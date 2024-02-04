@@ -123,7 +123,7 @@ def upload():
                 st.session_state['qabot'] = agency
                 st.session_state['pdf_name'] = pdf
                 #generate summary
-                response = agency.get_response("Generate a descriptive summary of the uploaded document")
+                response = agency.get_response("Generate a short, concise and useful summary of the uploaded document")
                 summary = response['output']
                 st.success("PDF processed Successfully!!!")
                 st.info("Summary of Uploaded Document is shown below")
