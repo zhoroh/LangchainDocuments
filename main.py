@@ -75,6 +75,7 @@ class Agency:
 # Upload Section
 def upload():
     st.header('Upload Your PDF')
+    st.info("For a seamless experience, you are advised to use this application in desktop mode")
     st.write("Drag and drop your PDF file here or click to upload. Please ensure that the text in the PDF is selectable and not a scanned image.")
     uploaded_file = st.file_uploader("", type="pdf")
 
