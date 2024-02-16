@@ -370,7 +370,7 @@ def quizz_generation():
         st.info("Generating Quizz Questions")
         st.session_state['questions'] = generate_questions(selection,pages_to_query,user_input)
         st.session_state['selection'] = selection
-        st.success("Quizz generated Successfukky")
+        st.success("Quizz generated Successfullyy")
         st.info("Please Click on the Display Quizz Button to Proceed")
     
 if 'quiz_state' not in st.session_state:
