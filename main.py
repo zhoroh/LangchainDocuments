@@ -24,6 +24,7 @@ load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 OBJECTIVE="Objective"
 TRUE_OR_FALSE="True/False"
+FLASH_CARDS='Flash Cards😍'
 OBJECTIVE_DEFAULT_VALUE=5
 TRUE_OR_FALSE_DEFAULT_VALUE=5
 
@@ -269,6 +270,31 @@ def generate_quizz(document,type,num_of_questions):
             <Begin Document>
             {doc}
             <End Document>"""
+    elif type == FLASH_CARDS:
+        prompt_template =  """You are a teacher preparing Flash Cards type questions for a quiz. Given the following document, please generate {num} questions and a corresponding short answer 
+            For each question, randomly select a section or sentence from the document, and then generate a useful question that would help your students in understanding the material .
+            When generating the question, please do not make any reference of the word "document"
+
+            Remember to vary the type of information each question is based on. Also, ensure each question has a different structure or focus to avoid repetition.
+
+
+            Example question:
+
+            QUESTION 1: question here
+            Answer: short answer
+
+            QUESTION 2: question here
+            Answer: short answer
+
+
+
+            These questions should be detailed and solely based on the information provided in the document.
+
+
+            <Begin Document>
+            {doc}
+            <End Document>"""
+
 
     
     prompt = PromptTemplate(
@@ -276,9 +302,31 @@ def generate_quizz(document,type,num_of_questions):
     )
     llm = LLMChain(llm=ChatOpenAI(temperature=0.5, model_name="gpt-4"), prompt=prompt)
     questions = (llm.run(num=num_of_questions,doc=document))
-    cleaned_questions = parse_questions(questions)
+    print(questions)
+    if type == FLASH_CARDS:
+        cleaned_questions = parse_flash_cards(questions)
+    else:
+        cleaned_questions = parse_questions(questions)
+    print(cleaned_questions)
     return cleaned_questions
     
+def parse_flash_cards(questions):
+    # Split the text by "QUESTION"
+    parts = questions.split('QUESTION')[1:]  # ignore the first split as it will be an empty string before the first "QUESTION"
+    
+    # Initialize an empty list to hold the question-answer pairs
+    qa_pairs = []
+    
+    # Iterate over the parts and extract the question and answer
+    for part in parts:
+        # Use regex to extract the question number, question, and answer
+        match = re.search(r'\d+: (.*?)\nAnswer: (.*?)$', part, re.DOTALL)
+        if match:
+            question = match.group(1).strip()
+            answer = match.group(2).strip()
+            qa_pairs.append({'question': question, 'answer': answer})
+    
+    return qa_pairs    
 def generate_questions(quiz_type:str,pages,no_of_questions):
     questions = []
     for page in pages:
@@ -332,14 +380,12 @@ def get_selected_page_ranges(page_ranges):
     return selected_page_ranges
 
 
-
-
     
 def quizz_generation():
     if 'qabot' not in st.session_state:
         st.error("A PDF File has to be uploaded to generate quizz")
         return
-    st.header("🌟 Welcome to StuddyBuddy! Ready to Test Your Knowledge? 🚀")
+    st.header("🌟 Welcome to StuddyBuddy! Ready to Test Your Knowledge and Practice What You've Learnt? 🚀")
     
     pages = st.session_state['pages']
     # print("PAEGS is ",pages)
@@ -348,7 +394,7 @@ def quizz_generation():
     page_ranges = list(page_ranges_2_index.keys())
     selected_page_ranges = get_selected_page_ranges(page_ranges)
     st.write('Selected Page Range:', ', '.join(selected_page_ranges) if selected_page_ranges else 'None')
-    selection = st.radio("What Format do you want?", [OBJECTIVE, TRUE_OR_FALSE],horizontal=True)
+    selection = st.radio("What Format do you want?", [OBJECTIVE, TRUE_OR_FALSE, FLASH_CARDS],horizontal=True)
     user_input = None
     if selection == OBJECTIVE:
         user_input = st.number_input('How many Questions Do you want Generated per Page', min_value=2, value=OBJECTIVE_DEFAULT_VALUE, step=1, format='%d')
@@ -362,12 +408,20 @@ def quizz_generation():
             st.error(f"Error: value should not be greater than {TRUE_OR_FALSE_DEFAULT_VALUE}.")
             return
         st.info(f"You'll be tested on a maximum of {TRUE_OR_FALSE_DEFAULT_VALUE} questions per Page")
+    if selection == FLASH_CARDS:
+        ""
+        user_input = 2 # for test
+        
+        #flash card saga starts here
     if st.button('generate quizz'):
         if len(selected_page_ranges) == 0:
             st.error("Please select Page Ranges you want to get tested on")
             return  
         pages_to_query = get_pages(selected_page_ranges,page_ranges_2_index,pages)
-        st.info("Generating Quizz Questions")
+        if selection == FLASH_CARDS:
+             st.info("Generating flash cards..... Please wait")
+        else:
+            st.info("Generating Quizz Questions")
         st.session_state['questions'] = generate_questions(selection,pages_to_query,user_input)
         st.session_state['selection'] = selection
         st.success("Quizz generated Successfullyy")
@@ -377,9 +431,29 @@ if 'quiz_state' not in st.session_state:
     st.session_state.quiz_state = {'submitted': False, 'user_answers': {}, 'score': 0}
 
 
+def local_css(file_name):
+    with open(file_name) as f:
+        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+
+
+# callbacks
+def callback():
+    st.session_state.button_clicked = True
+
+
+def callback2():
+    st.session_state.button2_clicked = True
+
+
 def get_state():
     return {'submitted': False, 'user_answers': {}, 'score': 0}
 
+def display_flash_card():
+    if 'questions' not in st.session_state:
+        st.error("Generate Flash Cards please")
+        return
+    questions = st.session_state['questions']
+    type = st.session_state['selection']
 
 def display_on_streamlit():
     if 'questions' not in st.session_state:
@@ -387,56 +461,130 @@ def display_on_streamlit():
         return
     data = st.session_state['questions']
     type = st.session_state['selection']
-    if type == OBJECTIVE:
-        st.title("Multiple Choice Quiz")
-    elif type == TRUE_OR_FALSE:
-        st.title("True or False Type Quiz")
+    if type == FLASH_CARDS:
+        ""
+        for i in range(len(data)):
+            data[i]["num"] = i+1
 
-    state = get_state()
+        local_css('./style.css')
+        if "button_clicked" not in st.session_state:
+            st.session_state.button_clicked = False
 
-    if not state['submitted']:
-        form_placeholder = st.empty()
-        with form_placeholder.form(key='quiz_form'):
-            user_answers = {}
+        if "button2_clicked" not in st.session_state:
+            st.session_state.button2_clicked = False
+
+        if "q_no" not in st.session_state:
+            st.session_state.q_no = 0
+
+        if "q_no_temp" not in st.session_state:
+            st.session_state.q_no_temp = 0
+        tab1 = st.tabs(["Flashcards"])
+        question_nums = []
+        with tab1[0]:
+            noq = len(data)
+            st.caption("There are {} flashcard questions for you to revise with".format(noq))
+            col1, col2 = st.columns(2)
+            with col1:
+                question = st.button(
+                    "Draw question", on_click=callback, key="Draw", use_container_width=True
+                )
+            with col2:
+                answer = st.button(
+                    "Show answer", on_click=callback2, key="Answer", use_container_width=True
+                )
+            if question or st.session_state.button_clicked:
+                while True:
+                    random_question = random.choice(data)
+                    num = random_question['num']
+                    if num not in question_nums:
+                        question_nums.append(num)
+                        break
+
+                
+                st.session_state.q_no = question_nums[-1]
+
+                # this 'if' checks if algorithm should use value from temp or new value (temp assigment in else)
+                if st.session_state.button2_clicked:
+                    st.markdown(
+                        f'<div class="blockquote-wrapper"><div class="blockquote"><h1><span style="color:#ffffff">{data[st.session_state.q_no_temp-1]["question"]}</span></h1><h4>&mdash; Question no. {st.session_state.q_no_temp}</em></h4></div></div>',
+                        unsafe_allow_html=True,
+                    )
+                else:
+                    st.markdown(
+                        f'<div class="blockquote-wrapper"><div class="blockquote"><h1><span style="color:#ffffff">{data[st.session_state.q_no-1]["question"]}</span></h1><h4>&mdash; Question no. {st.session_state.q_no}</em></h4></div></div>',
+                        unsafe_allow_html=True,
+                    )
+                    # keep memory of question number in order to show answer
+                    st.session_state.q_no_temp = st.session_state.q_no
+
+                if answer:
+                    st.markdown(
+                        f"<div class='answer'><span style='font-weight: bold; color:#6d7284;'>Answer to question number {st.session_state.q_no_temp}</span><br><br>{data[st.session_state.q_no_temp-1]['answer']}</div>",
+                        unsafe_allow_html=True,
+                    )
+                    st.session_state.button2_clicked = False
+
+            # this part normally should be on top however st.markdown always adds divs even it is rendering non visible parts?
+
+            st.markdown(
+                '<div><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Barlow+Condensed&family=Cabin&display=swap" rel="stylesheet"></div>',
+                unsafe_allow_html=True,
+            )
+
+
+
+    else:
+        if type == OBJECTIVE:
+            st.title("Multiple Choice Quiz")
+        elif type == TRUE_OR_FALSE:
+            st.title("True or False Type Quiz")
+
+        state = get_state()
+
+        if not state['submitted']:
+            form_placeholder = st.empty()
+            with form_placeholder.form(key='quiz_form'):
+                user_answers = {}
+                for idx, question in enumerate(data, start=1):
+                    st.write(f"Question {idx}: {question['question']}")
+                    options = question['options']
+                    user_answers[idx] = st.radio(f"Options for Question {idx}", options.keys(), format_func=lambda x: options[x])
+                
+                submit_button = st.form_submit_button(label='Submit Answers')
+
+            if submit_button:
+                state['submitted'] = True
+                state['user_answers'] = user_answers
+                # Calculate score
+                state['score'] = sum(1 for idx, q in enumerate(data, start=1) if user_answers[idx] == q['answer'])
+                form_placeholder.empty() # Clear the form
+
+        if state['submitted']:
             for idx, question in enumerate(data, start=1):
+                user_answer = state['user_answers'][idx]
+                correct_answer = question['options'][question['answer']]
+                if user_answer == question['answer']:
+                    feedback = "Correct"
+                else:
+                    feedback = f"Incorrect, Correct answer is {correct_answer}"
+
                 st.write(f"Question {idx}: {question['question']}")
-                options = question['options']
-                user_answers[idx] = st.radio(f"Options for Question {idx}", options.keys(), format_func=lambda x: options[x])
-            
-            submit_button = st.form_submit_button(label='Submit Answers')
+                st.write(f"Your answer: {question['options'][user_answer]} - {feedback}")
+                st.write("\n")
+                st.write("\n")
 
-        if submit_button:
-            state['submitted'] = True
-            state['user_answers'] = user_answers
-            # Calculate score
-            state['score'] = sum(1 for idx, q in enumerate(data, start=1) if user_answers[idx] == q['answer'])
-            form_placeholder.empty() # Clear the form
+            # Display score
+            st.write(f"Your Score: {state['score']}/{len(data)}")
 
-    if state['submitted']:
-        for idx, question in enumerate(data, start=1):
-            user_answer = state['user_answers'][idx]
-            correct_answer = question['options'][question['answer']]
-            if user_answer == question['answer']:
-                feedback = "Correct"
-            else:
-                feedback = f"Incorrect, Correct answer is {correct_answer}"
-
-            st.write(f"Question {idx}: {question['question']}")
-            st.write(f"Your answer: {question['options'][user_answer]} - {feedback}")
-            st.write("\n")
-            st.write("\n")
-
-        # Display score
-        st.write(f"Your Score: {state['score']}/{len(data)}")
-
-        if st.button('Try Again'):
-            state['submitted']
-            st.experimental_rerun()
+            if st.button('Try Again'):
+                state['submitted']
+                st.experimental_rerun()
 
 
 def main():
     st.sidebar.title("Navigation")
-    selection = st.sidebar.radio("Go to", ["Upload File","Interact With Uploaded PDF", "Quizz Generation","Display Quizz"])
+    selections = ["Upload File","Interact With Uploaded PDF", "Quizz Generation","Display Quizz"]
+    selection = st.sidebar.radio("Go to",selections )
     if selection == "Upload File":
         upload()
     elif selection == "Interact With Uploaded PDF":
