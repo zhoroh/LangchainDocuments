@@ -499,6 +499,8 @@ def display_on_streamlit():
                     if num not in question_nums:
                         question_nums.append(num)
                         break
+                    if len(question_nums) == noq:
+                        question_nums = []
 
                 
                 st.session_state.q_no = question_nums[-1]
